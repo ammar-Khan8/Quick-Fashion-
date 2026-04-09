@@ -1,0 +1,171 @@
+/* Navbar.css */
+
+.zara-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+  background-color: transparent;
+  z-index: 50;
+  transition: background-color 0.3s ease;
+  mix-blend-mode: difference;
+  color: #fff; /* White blends to black on white backgrounds */
+}
+
+/* Because mix-blend-mode is tricky with inputs and images, 
+   let's use a solid elegant white header instead for better compatibility without complex scroll logic */
+.zara-header {
+  background-color: var(--color-white);
+  color: var(--color-black);
+  mix-blend-mode: normal;
+}
+
+.header-left, .header-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.logo-text {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  margin-left: 16px;
+  text-decoration: none;
+  color: var(--color-black);
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+.icon-btn:hover {
+  opacity: 0.6;
+}
+
+.icon-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-black);
+  transition: opacity 0.2s;
+}
+.icon-link:hover {
+  opacity: 0.6;
+}
+
+.search-box {
+  border-bottom: 1px solid var(--color-black);
+  padding-bottom: 4px;
+  margin-right: 16px;
+}
+.search-input {
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 1px;
+  font-weight: 500;
+  width: 150px;
+  background: transparent;
+  color: var(--color-black);
+}
+.search-input::placeholder {
+  color: #999;
+}
+
+/* Drawer styles */
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 90;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.drawer-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.side-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 350px;
+  height: 100vh;
+  background-color: var(--color-white);
+  z-index: 100;
+  transform: translateX(-100%);
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  display: flex;
+  flex-direction: column;
+}
+.side-drawer.open {
+  transform: translateX(0);
+}
+
+.drawer-header {
+  height: 80px;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+}
+
+.drawer-content {
+  flex: 1;
+  padding: 20px 40px;
+  overflow-y: auto;
+}
+
+.drawer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.drawer-links a {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  transition: opacity 0.2s;
+  color: var(--color-black);
+}
+.drawer-links a:hover {
+  opacity: 0.6;
+}
+
+.drawer-footer {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top: 1px solid var(--color-light-gray);
+}
+.drawer-footer a {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--color-black);
+}
+
+@media (max-width: 768px) {
+  .zara-header { padding: 0 20px; }
+  .logo-text { font-size: 20px; margin-left: 8px; }
+  .search-box { display: none; }
+  .mobile-search-icon { display: block; }
+  .side-drawer { width: 85%; }
+  .drawer-header { padding: 0 20px; }
+  .drawer-content { padding: 20px; }
+  .drawer-footer { padding: 20px; }
+}

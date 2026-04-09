@@ -1,0 +1,211 @@
+/* Home.css */
+
+.home-container {
+  width: 100%;
+}
+
+/* Hero Section */
+.hero-section {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  margin-top: -80px; /* offset header height */
+  overflow: hidden;
+  background-color: var(--color-black); /* fallback */
+}
+
+.animated-poster-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0; /* Hidden by default */
+  transition: opacity 1.5s ease-in-out;
+}
+
+.animated-poster-layer.active {
+  opacity: 1;
+  animation: luxuriousZoom 25s ease-in-out infinite alternate;
+}
+
+@keyframes luxuriousZoom {
+  0% { transform: scale(1); background-position: 50% 50%; }
+  100% { transform: scale(1.12); background-position: 50% 35%; }
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.25); /* Adjusted darkening for better text readability */
+}
+
+.hero-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--color-white);
+  z-index: 10;
+  width: 100%;
+}
+
+.hero-title {
+  font-size: 8vw;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-bottom: 30px;
+}
+
+.btn-primary {
+  display: inline-block;
+  padding: 14px 40px;
+  background-color: var(--color-white);
+  color: var(--color-black);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1px;
+  transition: all 0.3s;
+}
+.btn-primary:hover {
+  background-color: var(--color-black);
+  color: var(--color-white);
+}
+
+/* Trending / Grid Split */
+.trending-section {
+  width: 100vw;
+  margin-bottom: 0;
+}
+.grid-split {
+  display: flex;
+  width: 100%;
+  height: 80vh;
+}
+.split-item {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  display: block;
+  text-decoration: none;
+  color: var(--color-white);
+}
+.split-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: luxuriousZoom 30s ease-in-out infinite alternate;
+}
+.split-item:hover img {
+  animation-play-state: paused;
+}
+.split-text {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: 2px;
+}
+
+/* Featured Section */
+.featured-section {
+  padding: 80px 40px;
+  background-color: var(--color-white);
+}
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  margin-bottom: 40px;
+  text-align: center;
+}
+.featured-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.product-card {
+  text-decoration: none;
+  color: var(--color-black);
+  display: flex;
+  flex-direction: column;
+}
+.product-image-container {
+  width: 100%;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  margin-bottom: 12px;
+  background-color: var(--color-light-gray);
+}
+.product-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.3s;
+}
+.product-image-container img:hover {
+  opacity: 0.9;
+}
+.product-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+.product-name {
+  font-weight: 500;
+}
+.product-price {
+  font-weight: 600;
+}
+.view-all-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 60px;
+}
+.btn-secondary {
+  display: inline-block;
+  padding: 12px 60px;
+  border: 1px solid var(--color-black);
+  color: var(--color-black);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1px;
+  transition: all 0.3s;
+}
+.btn-secondary:hover {
+  background-color: var(--color-black);
+  color: var(--color-white);
+}
+
+@media (max-width: 900px) {
+  .featured-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .grid-split {
+    flex-direction: column;
+    height: 120vh;
+  }
+  .split-item {
+    height: 50%;
+  }
+  .hero-title {
+    font-size: 12vw;
+  }
+  .featured-section {
+    padding: 60px 20px;
+  }
+}
