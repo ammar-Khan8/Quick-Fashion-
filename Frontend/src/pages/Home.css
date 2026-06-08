@@ -1,125 +1,295 @@
 /* Home.css */
 
+/* ═══════════════════════════════════════════════════════════
+   SCROLL FADE-IN ANIMATION
+   Applied via IntersectionObserver — .fade-in-up starts hidden,
+   .visible triggers the animation when element enters viewport.
+═══════════════════════════════════════════════════════════ */
+
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.fade-in-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Product grid fade-in when banner switches (CSS animation, triggered by React key change) */
+@keyframes gridFadeIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.grid-fade-in {
+  animation: gridFadeIn 0.5s ease forwards;
+}
+
 .home-container {
   width: 100%;
 }
 
-/* Hero Section */
+/* ═══════════════════════════════════════════════════════════
+   HERO CAROUSEL
+═══════════════════════════════════════════════════════════ */
+
 .hero-section {
   position: relative;
-  width: 100vw;
-  height: 100vh;
-  margin-top: -80px; /* offset header height */
+  width: 100%;
   overflow: hidden;
-  background-color: var(--color-black); /* fallback */
+  background-color: #111;
 }
 
-.animated-poster-layer {
+/* The track holds all slides; they stack on top of each other */
+.carousel-track {
+  position: relative;
+  width: 100%;
+}
+
+/* Each slide is hidden by default */
+.carousel-slide {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  opacity: 0; /* Hidden by default */
-  transition: opacity 1.5s ease-in-out;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.9s ease-in-out;
 }
 
-.animated-poster-layer.active {
+.carousel-slide.active {
+  position: relative; /* active slide takes up space, others overlay */
   opacity: 1;
-  animation: luxuriousZoom 25s ease-in-out infinite alternate;
+  pointer-events: auto;
 }
 
-@keyframes luxuriousZoom {
-  0% { transform: scale(1); background-position: 50% 50%; }
-  100% { transform: scale(1.12); background-position: 50% 35%; }
-}
-
-.hero-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
+/* ── Portrait banners (Adidas, H&M) ── */
+/* Cap height so tall portrait images don't eat 100vh on desktop */
+.carousel-slide.portrait .carousel-img {
+  display: block;
   width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.25); /* Adjusted darkening for better text readability */
+  max-height: 90vh;
+  object-fit: contain;      /* Show full image — no cropping */
+  object-position: center top;
+  background-color: var(--color-bg-secondary);
 }
 
-.hero-content {
+/* ── Landscape banners (Grand Sale) ── */
+.carousel-slide.landscape .carousel-img {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  object-fit: cover;
+  object-position: center center;
+}
+
+/* On mobile: portrait images can be taller since viewport is narrow */
+@media (max-width: 768px) {
+  .carousel-slide.portrait .carousel-img {
+    max-height: 100svh;
+    object-fit: cover;         /* fills narrow mobile screen nicely */
+    object-position: center top;
+  }
+  .carousel-slide.landscape .carousel-img {
+    max-height: 40vh;
+    object-fit: cover;
+  }
+}
+
+/* ── Explore pill button ── */
+.explore-btn {
+  position: absolute;
+  bottom: 28px;
+  right: 28px;
+  padding: 10px 26px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  transition: background 0.25s ease, transform 0.2s ease;
+  z-index: 10;
+  white-space: nowrap;
+}
+.explore-btn:hover {
+  background: rgba(255, 255, 255, 0.32);
+  transform: translateY(-2px);
+}
+
+/* ── Arrows ── */
+.carousel-arrow {
   position: absolute;
   top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.carousel-arrow:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+.carousel-arrow--left  { left: 18px; }
+.carousel-arrow--right { right: 18px; }
+
+/* ── Dots ── */
+.carousel-dots {
+  position: absolute;
+  bottom: 16px;
   left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  color: var(--color-white);
-  z-index: 10;
-  width: 100%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 20;
+}
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.3s;
+  padding: 0;
+}
+.carousel-dot.active {
+  background: #fff;
+  transform: scale(1.3);
 }
 
-.hero-title {
-  font-size: 8vw;
+/* ═══════════════════════════════════════════════════════════
+   SALE PRODUCTS SECTION
+═══════════════════════════════════════════════════════════ */
+
+.sale-section {
+  padding: 60px 40px 40px;
+  background-color: var(--color-bg-main);
+}
+
+.sale-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 32px;
+}
+
+.sale-title {
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 2px;
-  margin-bottom: 30px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-black);
 }
 
-.btn-primary {
-  display: inline-block;
-  padding: 14px 40px;
-  background-color: var(--color-white);
+.sale-see-all {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
   color: var(--color-black);
   text-decoration: none;
-  font-weight: 600;
-  font-size: 11px;
-  letter-spacing: 1px;
-  transition: all 0.3s;
+  border-bottom: 1px solid var(--color-black);
+  padding-bottom: 1px;
+  transition: opacity 0.2s;
 }
-.btn-primary:hover {
-  background-color: var(--color-black);
-  color: var(--color-white);
+.sale-see-all:hover { opacity: 0.55; }
+
+/* Product grid */
+.sale-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
 }
 
-/* Trending / Grid Split */
-.trending-section {
-  width: 100vw;
-  margin-bottom: 0;
+@media (max-width: 1200px) {
+  .sale-grid { grid-template-columns: repeat(4, 1fr); }
 }
-.grid-split {
-  display: flex;
-  width: 100%;
-  height: 80vh;
+@media (max-width: 900px) {
+  .sale-grid { grid-template-columns: repeat(3, 1fr); }
 }
-.split-item {
-  position: relative;
-  flex: 1;
-  overflow: hidden;
-  display: block;
+@media (max-width: 600px) {
+  .sale-section { padding: 40px 16px 24px; }
+  .sale-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
+
+/* Product card */
+.sale-card {
   text-decoration: none;
-  color: var(--color-white);
+  color: var(--color-black);
+  display: flex;
+  flex-direction: column;
 }
-.split-item img {
+.sale-card-img-wrap {
+  width: 100%;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  background-color: var(--color-light-gray);
+  margin-bottom: 8px;
+}
+.sale-card-img-wrap img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  animation: luxuriousZoom 30s ease-in-out infinite alternate;
+  transition: transform 0.45s ease;
 }
-.split-item:hover img {
-  animation-play-state: paused;
+.sale-card:hover .sale-card-img-wrap img {
+  transform: scale(1.05);
 }
-.split-text {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 24px;
+.sale-card-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  gap: 4px;
+}
+.sale-card-name {
   font-weight: 500;
-  letter-spacing: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70%;
+}
+.sale-card-price {
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-/* Featured Section */
+/* ── Skeleton loader ── */
+.sale-skeleton {
+  width: 100%;
+  aspect-ratio: 3/4;
+  background: linear-gradient(90deg, var(--color-bg-secondary) 25%, #2a2a2a 50%, var(--color-bg-secondary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite ease-in-out;
+  border-radius: 2px;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FEATURED / NEW ARRIVALS
+═══════════════════════════════════════════════════════════ */
+
 .featured-section {
   padding: 80px 40px;
-  background-color: var(--color-white);
+  background-color: var(--color-bg-main);
+  border-top: 1px solid var(--color-gray);
 }
 .section-title {
   font-size: 16px;
@@ -150,10 +320,10 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: opacity 0.3s;
+  transition: transform 0.45s ease;
 }
-.product-image-container img:hover {
-  opacity: 0.9;
+.product-card:hover .product-image-container img {
+  transform: scale(1.05);
 }
 .product-info {
   display: flex;
@@ -161,12 +331,9 @@
   font-size: 11px;
   letter-spacing: 0.5px;
 }
-.product-name {
-  font-weight: 500;
-}
-.product-price {
-  font-weight: 600;
-}
+.product-name { font-weight: 500; }
+.product-price { font-weight: 600; }
+
 .view-all-container {
   display: flex;
   justify-content: center;
@@ -175,8 +342,8 @@
 .btn-secondary {
   display: inline-block;
   padding: 12px 60px;
-  border: 1px solid var(--color-black);
-  color: var(--color-black);
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
   text-decoration: none;
   font-weight: 600;
   font-size: 11px;
@@ -184,28 +351,15 @@
   transition: all 0.3s;
 }
 .btn-secondary:hover {
-  background-color: var(--color-black);
-  color: var(--color-white);
+  background-color: var(--color-accent);
+  color: var(--color-bg-main);
 }
 
+/* Responsive */
 @media (max-width: 900px) {
-  .featured-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .featured-grid { grid-template-columns: repeat(2, 1fr); }
 }
-
 @media (max-width: 600px) {
-  .grid-split {
-    flex-direction: column;
-    height: 120vh;
-  }
-  .split-item {
-    height: 50%;
-  }
-  .hero-title {
-    font-size: 12vw;
-  }
-  .featured-section {
-    padding: 60px 20px;
-  }
+  .featured-section { padding: 60px 20px; }
+  .featured-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
 }

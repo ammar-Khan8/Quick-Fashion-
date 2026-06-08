@@ -1,11 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --color-black: #000000;
-  --color-white: #ffffff;
-  --color-gray: #e5e5e5;
-  --color-text: #1a1a1a;
-  --color-light-gray: #f2f2f2;
+  /* Core Theme Palette */
+  --color-bg-main: #121212;          /* Charcoal Black */
+  --color-bg-secondary: #1E1E1E;     /* Dark Fabric Gray */
+  --color-accent: #C8A96B;           /* Warm Gold */
+  --color-text: #F5F1E8;             /* Soft Ivory */
+  --color-highlight: #6E1F28;        /* Deep Wine Red */
+
+  /* Compatibility Mapping */
+  --color-black: var(--color-text);
+  --color-white: var(--color-bg-main);
+  --color-gray: rgba(245, 241, 232, 0.15);
+  --color-light-gray: var(--color-bg-secondary);
+  
   --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 

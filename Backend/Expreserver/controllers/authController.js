@@ -5,22 +5,30 @@ import pool from '../db/postgres.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
+if (!JWT_SECRET || !REFRESH_SECRET) {
+  console.error('Missing JWT_SECRET or REFRESH_SECRET environment variables. Add them to Backend/Expreserver/.env.');
+  throw new Error('Missing JWT_SECRET or REFRESH_SECRET');
+}
 // shouldnt both refresh and access use diff secrets? yeah, its a good practice to use different secrets 
 // for access and refresh tokens to enhance security.
 // refreshes are used cz Access token expires quickly (user needs to refresh frequently)
-const ACCESS_TOKEN_EXPIRES_IN = '15m'; //eh? cant i keep em logged in 1 day since this a shopping 
-// app? yeah you can, but shorter expiration times for access tokens are generally recommended 
-// for better security. Refresh token lasts longer (keeps user logged in without re-entering credentials)
+const ACCESS_TOKEN_EXPIRES_IN = '2m'; // set short for testing; bump to '15m' or '1d' in production
 const REFRESH_TOKEN_EXPIRES_IN = '7d';
 
 
 // Create just the access token (short-lived JWT)
-function createAccessToken(userId) {//we are defining this function 2 be used later
+function createAccessToken(userId) {
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET is not configured');
+  }
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRES_IN });
 }
 
-// Create a refresh token (long-lived JWT used to get new access tokens)
+// Create a refresh token (long-lived JWT used to get new access tokens when expired)
 function createRefreshToken(userId) {
+  if (!REFRESH_SECRET) {
+    throw new Error('REFRESH_SECRET is not configured');
+  }
   return jwt.sign({ userId }, REFRESH_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRES_IN });
 }
 
@@ -36,6 +44,26 @@ function createRefreshToken(userId) {
 // token itself. 
 function hashRefreshToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+// The refresh token is sent to the browser as an httpOnly cookie.
+// httpOnly means JS running on the page CANNOT read it at all — even XSS can't steal it.
+// The browser attaches the cookie automatically on every matching request.
+const COOKIE_NAME = 'refreshToken';
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production', // false on localhost (http), true in prod (https)
+  sameSite: 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+  path: '/',
+};
+
+function setRefreshTokenCookie(res, refreshToken) {
+  res.cookie(COOKIE_NAME, refreshToken, COOKIE_OPTIONS);
+}
+
+function clearRefreshTokenCookie(res) {
+  res.clearCookie(COOKIE_NAME, { ...COOKIE_OPTIONS, maxAge: 0 });
 }
 
 // Store refresh token in database with expiry date
@@ -55,7 +83,7 @@ async function storeRefreshToken(userId, refreshToken) {
   //what is js date object? the Date object in JavaScript is a built-in object that represents a single moment 
   //in time. It provides methods for working with dates and times, such as getting the current date, 
   //formatting dates, and performing date arithmetic. can we not directly get date?
-  
+
   await pool.query(
     'INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
     [userId, tokenHash, expiresAt]
@@ -89,7 +117,7 @@ export async function registerUser(req, res) {
 
     const passwordHash = await bcrypt.hash(password, 12); //kind of high maybe
     const insert = await pool.query(
-      'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email, created_at',
+      'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email',
       [name, email, passwordHash] // we are inserting a new user into the users table with the
       //provided name, email, and hashed password.
     );
@@ -99,26 +127,24 @@ export async function registerUser(req, res) {
     // the insert query, which should contain the newly created user's information (id, name, email,
     // created_at) and storing it in the user variable. it will also return id, name, email, 
     // created_at because of the RETURNING clause in the SQL query.
-    
+
     // Create access token (short-lived, used for API requests)
     const accessToken = createAccessToken(user.id);
-    
+
     // Create refresh token (long-lived, used to get new access tokens when expired)
     const refreshToken = createRefreshToken(user.id);
-    
-    // Store refresh token in database so we can validate it later
-    await storeRefreshToken(user.id, refreshToken); //why is storing an async op? shouldnt
-    //it be instant? storing the refresh token involves inserting a record into the database, which is an
-    //asynchronous operation because it may take some time to complete, especially if the database is 
-    //under load or if there are network delays. By using async/await, we can ensure that we wait for the 
-    //database operation to finish before proceeding to send the response back to the client. If we didn't
-    //await this operation, we might send the response before the refresh token is actually stored in the database,
-    //which could lead to issues when the client tries to use that refresh token later on.
 
-    return res.status(201).json({ 
-      user, 
-      accessToken,
-      refreshToken 
+    // Store hashed refresh token in the database
+    await storeRefreshToken(user.id, refreshToken);
+
+    // Send the refresh token as an httpOnly cookie — it never goes in the JSON body.
+    // JS on the page cannot access httpOnly cookies at all.
+    setRefreshTokenCookie(res, refreshToken);
+
+    // Only the access token goes in the response body.
+    return res.status(201).json({
+      user,
+      accessToken
     });
   } catch (error) {
     console.error('registerUser error:', error);
@@ -146,17 +172,19 @@ export async function loginUser(req, res) {
 
     // Create access token (short-lived, used for API requests)
     const accessToken = createAccessToken(user.id);
-    
+
     // Create refresh token (long-lived, used to get new access tokens when expired)
     const refreshToken = createRefreshToken(user.id);
-    
-    // Store refresh token in database so we can validate it later
+
+    // Store hashed refresh token in the database
     await storeRefreshToken(user.id, refreshToken);
-    
-    return res.json({ 
-      user: { id: user.id, name: user.name, email: user.email }, 
-      accessToken,
-      refreshToken 
+
+    // Send the refresh token as an httpOnly cookie — never in the JSON body
+    setRefreshTokenCookie(res, refreshToken);
+
+    return res.json({
+      user: { id: user.id, name: user.name, email: user.email },
+      accessToken
     });
   } catch (error) {
     console.error('loginUser error:', error);
@@ -173,7 +201,7 @@ export async function getProfile(req, res) {
     }
 
     const result = await pool.query(
-      'SELECT id, name, email, created_at FROM users WHERE id = $1',
+      'SELECT id, name, email FROM users WHERE id = $1',
       [userId]
     );
 
@@ -188,55 +216,115 @@ export async function getProfile(req, res) {
   }
 }
 
-// Handle refresh token requests to get a new access token
+// Handle refresh token requests to get a new access token.
+// The browser sends the httpOnly refreshToken cookie automatically.
+// In dev, Vite's proxy sometimes strips Cookie headers when forwarding
+// requests to Express, so we also accept the expired access token from the
+// Authorization header as a fallback to identify the user.
 export async function refreshAccessToken(req, res) {
   try {
-    // Client sends refresh token in request body
-    const { refreshToken } = req.body;
-    if (!refreshToken) {
-      return res.status(400).json({ error: 'Refresh token is required.' });
+    let userId;
+
+    // ── Primary path: httpOnly cookie (correct in production) ──────────────
+    const cookieToken = req.cookies[COOKIE_NAME];
+    if (cookieToken) {
+      let payload;
+      try {
+        payload = jwt.verify(cookieToken, REFRESH_SECRET);
+      } catch (err) {
+        clearRefreshTokenCookie(res);
+        return res.status(401).json({ error: 'Invalid or expired refresh token.' });
+      }
+
+      // Confirm this exact token exists in the DB and is not revoked
+      const tokenHash = hashRefreshToken(cookieToken);
+      const storedToken = await pool.query(
+        'SELECT id, expires_at FROM refresh_tokens WHERE user_id = $1 AND token_hash = $2 AND revoked = FALSE',
+        [payload.userId, tokenHash]
+      );
+
+      if (!storedToken.rows.length) {
+        clearRefreshTokenCookie(res);
+        return res.status(401).json({ error: 'Refresh token not found or has been revoked.' });
+      }
+      if (new Date() > new Date(storedToken.rows[0].expires_at)) {
+        clearRefreshTokenCookie(res);
+        return res.status(401).json({ error: 'Refresh token has expired.' });
+      }
+
+      // Rotate the specific token we just validated
+      await pool.query('UPDATE refresh_tokens SET revoked = TRUE WHERE id = $1', [storedToken.rows[0].id]);
+      userId = payload.userId;
+
+    // ── Fallback: expired Bearer token (dev / Vite proxy) ──────────────────
+    // The refresh token itself never leaves the backend. We only use the
+    // expired access token to identify the user (jwt.decode ignores expiry).
+    } else if (req.headers.authorization?.startsWith('Bearer ')) {
+      const expiredToken = req.headers.authorization.split(' ')[1];
+      const decoded = jwt.decode(expiredToken); // decode only — expiry intentionally ignored
+      if (!decoded?.userId) {
+        return res.status(401).json({ error: 'Cannot identify user. Please log in again.' });
+      }
+
+      // Find the most recent valid refresh record for this user
+      const storedToken = await pool.query(
+        `SELECT id, expires_at
+         FROM refresh_tokens
+         WHERE user_id = $1 AND revoked = FALSE
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [decoded.userId]
+      );
+
+      if (!storedToken.rows.length) {
+        return res.status(401).json({ error: 'No active session found. Please log in again.' });
+      }
+      if (new Date() > new Date(storedToken.rows[0].expires_at)) {
+        return res.status(401).json({ error: 'Session has expired. Please log in again.' });
+      }
+
+      // Rotate
+      await pool.query('UPDATE refresh_tokens SET revoked = TRUE WHERE id = $1', [storedToken.rows[0].id]);
+      userId = decoded.userId;
+
+    } else {
+      return res.status(401).json({ error: 'No refresh credentials provided. Please log in again.' });
     }
 
-    // Verify the refresh token's signature
-    let payload;
-    try {
-      payload = jwt.verify(refreshToken, REFRESH_SECRET);
-    } catch (error) {
-      return res.status(401).json({ error: 'Invalid or expired refresh token.' });
-    }
-
-    const userId = payload.userId;
-
-    // Check if this refresh token exists in the database and is not revoked
-    const tokenHash = hashRefreshToken(refreshToken);
-    const storedToken = await pool.query(
-      'SELECT id, revoked, expires_at FROM refresh_tokens WHERE user_id = $1 AND token_hash = $2 AND revoked = FALSE',
-      [userId, tokenHash]
-    );
-
-    if (!storedToken.rows.length) {
-      return res.status(401).json({ error: 'Refresh token not found or has been revoked.' });
-    }
-
-    // Check if token has expired
-    const tokenRecord = storedToken.rows[0];
-    if (new Date() > new Date(tokenRecord.expires_at)) {
-      return res.status(401).json({ error: 'Refresh token has expired.' });
-    }
-
-    // Issue a new access token
+    // ── Issue fresh tokens ──────────────────────────────────────────────────
     const newAccessToken = createAccessToken(userId);
-
-    // Optionally: issue a new refresh token too (refresh token rotation for extra security)
     const newRefreshToken = createRefreshToken(userId);
     await storeRefreshToken(userId, newRefreshToken);
 
-    return res.json({
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken
-    });
+    // Always set the new cookie (cookie path: httpOnly for production security)
+    setRefreshTokenCookie(res, newRefreshToken);
+
+    return res.json({ accessToken: newAccessToken });
   } catch (error) {
     console.error('refreshAccessToken error:', error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+}
+
+export async function logoutUser(req, res) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized.' });
+    }
+
+    // Revoke all refresh tokens for this user in the DB
+    await pool.query(
+      'UPDATE refresh_tokens SET revoked = TRUE WHERE user_id = $1',
+      [userId]
+    );
+
+    // Clear the httpOnly cookie from the browser
+    clearRefreshTokenCookie(res);
+
+    return res.json({ success: true, message: 'Logged out successfully.' });
+  } catch (error) {
+    console.error('logoutUser error:', error);
     return res.status(500).json({ error: 'Internal server error.' });
   }
 }

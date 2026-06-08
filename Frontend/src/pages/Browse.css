@@ -12,7 +12,7 @@
   margin-bottom: 40px;
   position: sticky;
   top: 80px;
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: rgba(18, 18, 18, 0.95);
   padding: 10px 0;
   z-index: 40;
 }
@@ -24,7 +24,7 @@
 }
 .product-count {
   font-size: 10px;
-  color: #666;
+  color: rgba(245, 241, 232, 0.6);
   letter-spacing: 0.5px;
 }
 
@@ -51,10 +51,10 @@
   font-weight: 600;
 }
 .toggle-btn {
-  color: #999;
+  color: rgba(245, 241, 232, 0.4);
 }
 .toggle-btn.active {
-  color: var(--color-black);
+  color: var(--color-accent);
 }
 
 .product-grid {
@@ -139,4 +139,85 @@
   .browse-header { flex-direction: column; align-items: flex-start; gap: 16px; }
   .view-toggles { display: none; }
   .columns-4, .columns-2 { grid-template-columns: repeat(2, 1fr); gap: 8px;}
+}
+
+/* Loading */
+.browse-loading {
+  text-align: center;
+  padding: 80px 0;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #999;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 60px 0 20px;
+}
+
+.page-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  border: 1px solid var(--color-accent);
+  background: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.page-btn:hover:not(:disabled) {
+  background: var(--color-accent);
+  color: var(--color-bg-main);
+}
+.page-btn:disabled {
+  border-color: rgba(245, 241, 232, 0.2);
+  color: rgba(245, 241, 232, 0.2);
+  cursor: default;
+}
+
+.page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.page-num {
+  width: 34px;
+  height: 34px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(245, 241, 232, 0.6);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.page-num:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.page-num.active {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-bg-main);
+  font-weight: 700;
+}
+
+.page-ellipsis {
+  font-size: 11px;
+  color: #999;
+  padding: 0 4px;
+  user-select: none;
 }

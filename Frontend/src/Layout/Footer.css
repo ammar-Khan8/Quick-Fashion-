@@ -24,13 +24,15 @@
   width: 100%;
   border: none;
   outline: none;
+  background: transparent;
+  color: var(--color-text);
   font-family: inherit;
   font-size: 13px;
   font-weight: 400;
   letter-spacing: 0.5px;
 }
 .newsletter-input::placeholder {
-  color: #999;
+  color: rgba(245, 241, 232, 0.4);
 }
 
 .footer-links-grid {
@@ -53,12 +55,12 @@
 .footer-col a {
   font-size: 11px;
   font-weight: 400;
-  color: #666;
+  color: rgba(245, 241, 232, 0.6);
   letter-spacing: 0.5px;
   transition: color 0.2s;
 }
 .footer-col a:hover {
-  color: var(--color-black);
+  color: var(--color-accent);
 }
 
 .footer-bottom {
@@ -67,7 +69,7 @@
   align-items: flex-end;
   font-size: 10px;
   font-weight: 400;
-  color: #666;
+  color: rgba(245, 241, 232, 0.4);
   letter-spacing: 1px;
 }
 

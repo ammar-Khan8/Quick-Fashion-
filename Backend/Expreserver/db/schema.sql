@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -63,4 +64,30 @@ CREATE TABLE IF NOT EXISTS reviews (
   rating INT CHECK (rating >= 1 AND rating <= 5),
   comment TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table to store refresh tokens for each user
+-- Each token is tied to a user and has an expiry date
+-- When a refresh token is used, it can be marked as revoked or replaced
+
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  revoked BOOLEAN DEFAULT FALSE
+);
+
+-- Table to store payment orders (for Razorpay integration)
+-- Each order tracks a payment attempt for a user
+CREATE TABLE IF NOT EXISTS orders (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  razorpay_order_id VARCHAR(50),
+  razorpay_payment_id VARCHAR(50),
+  amount INT NOT NULL, -- amount in base currency (e.g., rupees, not paise)
+  status VARCHAR(20) DEFAULT 'pending', -- pending, paid, failed, cancelled
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
