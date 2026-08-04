@@ -11,6 +11,7 @@ export default function Browse() {
 
   const search = searchParams.get('search')?.toLowerCase() || '';
   const category = searchParams.get('category') || '';
+  const gender = searchParams.get('gender') || '';
   const page = Math.max(1, parseInt(searchParams.get('page')) || 1);
 
   const [products, setProducts] = useState([]);
@@ -25,6 +26,7 @@ export default function Browse() {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
       if (category) params.set('category', category);
+      if (gender) params.set('gender', gender);
       params.set('page', page);
       params.set('limit', PAGE_SIZE);
 
@@ -46,7 +48,7 @@ export default function Browse() {
     } finally {
       setLoading(false);
     }
-  }, [search, category, page]);
+  }, [search, category, gender, page]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -61,6 +63,7 @@ export default function Browse() {
     const next = { page: newPage };
     if (search) next.search = search;
     if (category) next.category = category;
+    if (gender) next.gender = gender;
     setSearchParams(next);
   };
 
@@ -68,25 +71,39 @@ export default function Browse() {
     event.preventDefault();
     const next = { page: 1 };
     if (category) next.category = category;
+    if (gender) next.gender = gender;
     const trimmed = searchInput.trim();
     if (trimmed) next.search = trimmed;
     setSearchParams(next);
   };
 
-  const clearTag = (tagType) => {
+  const toggleGender = (g) => {
     const next = { page: 1 };
-    if (tagType === 'search') {
-      if (category) next.category = category;
-    } else if (tagType === 'category') {
-      if (search) next.search = search;
-    }
+    if (search) next.search = search;
+    if (category) next.category = category;
+    // clicking the active gender deselects it
+    if (gender !== g) next.gender = g;
     setSearchParams(next);
   };
 
+  const clearTag = (tagType) => {
+    const next = { page: 1 };
+    if (tagType !== 'search' && search) next.search = search;
+    if (tagType !== 'category' && category) next.category = category;
+    if (tagType !== 'gender' && gender) next.gender = gender;
+    setSearchParams(next);
+  };
+
+  const clearAllFilters = () => {
+    setSearchParams({ page: 1 });
+  };
+
   const pageLabel = search
-    ? `Search results for “${search}”`
+    ? `Search results for "${search}"`
     : category
     ? category.toUpperCase()
+    : gender
+    ? `${gender.charAt(0).toUpperCase() + gender.slice(1)}'s Collection`
     : 'New Arrivals';
 
   return (
@@ -114,13 +131,20 @@ export default function Browse() {
           <div className="filter-title">Filters</div>
 
           <div className="filter-group">
-            <div className="filter-heading">Category</div>
+            <div className="filter-heading">Gender</div>
             <div className="filter-body">
               <div className="filter-options">
-                <div className="filter-option checked"><span className="box" />Women</div>
-                <div className="filter-option"><span className="box" />Men</div>
-                <div className="filter-option"><span className="box" />Kids</div>
-                <div className="filter-option"><span className="box" />Home</div>
+                {['women', 'men', 'kids'].map((g) => (
+                  <div
+                    key={g}
+                    className={`filter-option${gender === g ? ' checked' : ''}`}
+                    onClick={() => toggleGender(g)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span className="box" />
+                    {g.charAt(0).toUpperCase() + g.slice(1)}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -148,7 +172,7 @@ export default function Browse() {
             </div>
           </div>
 
-          <button className="clear-filters" type="button">Clear Filters</button>
+          <button className="clear-filters" type="button" onClick={clearAllFilters}>Clear Filters</button>
         </aside>
 
         <main className="browse-results">
@@ -169,7 +193,7 @@ export default function Browse() {
             </label>
           </div>
 
-          {(search || category) && (
+          {(search || category || gender) && (
             <div className="active-tags">
               {search && (
                 <button className="active-tag" type="button" onClick={() => clearTag('search')}>
@@ -179,6 +203,11 @@ export default function Browse() {
               {category && (
                 <button className="active-tag" type="button" onClick={() => clearTag('category')}>
                   {category} <span className="x">×</span>
+                </button>
+              )}
+              {gender && (
+                <button className="active-tag" type="button" onClick={() => clearTag('gender')}>
+                  {gender} <span className="x">×</span>
                 </button>
               )}
             </div>

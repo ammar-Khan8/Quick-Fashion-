@@ -20,11 +20,38 @@ function useInView(options = {}) {
   return [ref, inView];
 }
 
+// ─── Product categories — keyed by gender, matching actual DB categories ────────
+const CATEGORIES_BY_GENDER = {
+  women: [
+    { id: 'Kurti',     label: 'Kurti',     image: null },
+    { id: 'Dress',     label: 'Dress',     image: null },
+    { id: 'Skirt',     label: 'Skirt',     image: null },
+    { id: 'Top',       label: 'Top',       image: null },
+    { id: 'Tracksuit', label: 'Tracksuit', image: null },
+    { id: 'Blouse',    label: 'Blouse',    image: null },
+    { id: 'Leggings',  label: 'Leggings',  image: null },
+    { id: 'Jumpsuit',  label: 'Jumpsuit',  image: null },
+    { id: 'Saree',     label: 'Saree',     image: null },
+  ],
+  men: [
+    { id: 'Shirt',    label: 'Shirt',    image: null },
+    { id: 'T-shirt',  label: 'T-Shirt',  image: null },
+    { id: 'Jeans',    label: 'Jeans',    image: null },
+    { id: 'Trousers', label: 'Trousers', image: null },
+    { id: 'Hoodie',   label: 'Hoodie',   image: null },
+    { id: 'Jacket',   label: 'Jacket',   image: null },
+    { id: 'Coat',     label: 'Coat',     image: null },
+    { id: 'Sweater',  label: 'Sweater',  image: null },
+    { id: 'Shorts',   label: 'Shorts',   image: null },
+  ],
+};
+
 export default function Home() {
   const [saleProducts, setSaleProducts] = useState([]);
   const [saleLoading, setSaleLoading] = useState(true);
   const [newArrivals, setNewArrivals] = useState([]);
   const [newArrivalsLoading, setNewArrivalsLoading] = useState(true);
+  const [activeGender, setActiveGender] = useState('women');
 
   // Scroll fade-in refs
   const [saleRef, saleInView] = useInView();
@@ -125,101 +152,41 @@ export default function Home() {
           <h2 className="section-title">Shop by<br /><em>Category</em></h2>
           <Link to="/browse" className="section-link">View All</Link>
         </div>
-        <div className="cat-grid">
-          {/* Woman - large */}
-          <Link to="/browse?category=woman" className="cat-card">
-            <div className="cat-overlay-accent"></div>
-            <div className="cat-bg cat-woman" style={{ height: '100%' }}>
-              <div className="cat-abstract">
-                <svg width="200" height="300" viewBox="0 0 200 300" fill="none">
-                  <ellipse cx="100" cy="80" rx="50" ry="60" stroke="white" strokeWidth="1" />
-                  <rect x="60" y="130" width="80" height="140" stroke="white" strokeWidth="1" />
-                </svg>
+
+        {/* ── Gender Toggle ─────────────────────────────────────────────── */}
+        <div className="gender-toggle">
+          <button
+            className={`gender-btn${activeGender === 'women' ? ' gender-btn--active' : ''}`}
+            onClick={() => setActiveGender('women')}
+          >
+            Women
+          </button>
+          <button
+            className={`gender-btn${activeGender === 'men' ? ' gender-btn--active' : ''}`}
+            onClick={() => setActiveGender('men')}
+          >
+            Men
+          </button>
+        </div>
+
+        {/* ── Product-type filter grid ───────────────────────────────────── */}
+        <div className="cat-filter-grid">
+          {(CATEGORIES_BY_GENDER[activeGender] || []).map((cat) => (
+            <Link
+              key={cat.id}
+              to={`/browse?gender=${activeGender}&category=${cat.id}`}
+              className="cat-filter-card"
+            >
+              <div className="cat-filter-img">
+                {cat.image
+                  ? <img src={cat.image} alt={cat.label} className="cat-filter-photo" />
+                  : <div className="cat-filter-placeholder" />}
+                <div className="cat-overlay-accent"></div>
+                <div className="cat-filter-arrow">→</div>
               </div>
-            </div>
-            <div className="cat-info">
-              <div>
-                <div className="cat-name">Woman</div>
-                <div className="cat-count">1,240 pieces</div>
-              </div>
-            </div>
-            <div className="cat-arrow">→</div>
-          </Link>
-          {/* Man */}
-          <Link to="/browse?category=man" className="cat-card">
-            <div className="cat-overlay-accent"></div>
-            <div className="cat-bg cat-man" style={{ height: '100%' }}>
-              <div className="cat-abstract">
-                <svg width="140" height="200" viewBox="0 0 140 200" fill="none">
-                  <rect x="30" y="10" width="80" height="180" stroke="white" strokeWidth="1" />
-                </svg>
-              </div>
-            </div>
-            <div className="cat-info">
-              <div>
-                <div className="cat-name">Man</div>
-                <div className="cat-count">840 pieces</div>
-              </div>
-            </div>
-            <div className="cat-arrow">→</div>
-          </Link>
-          {/* Kids */}
-          <Link to="/browse?category=kids" className="cat-card">
-            <div className="cat-overlay-accent"></div>
-            <div className="cat-bg cat-kids" style={{ height: '100%' }}>
-              <div className="cat-abstract">
-                <svg width="120" height="160" viewBox="0 0 120 160" fill="none">
-                  <circle cx="60" cy="40" r="30" stroke="#2a2520" strokeWidth="1" />
-                  <rect x="25" y="70" width="70" height="80" stroke="#2a2520" strokeWidth="1" />
-                </svg>
-              </div>
-            </div>
-            <div className="cat-info">
-              <div>
-                <div className="cat-name">Kids</div>
-                <div className="cat-count">620 pieces</div>
-              </div>
-            </div>
-            <div className="cat-arrow">→</div>
-          </Link>
-          {/* Home */}
-          <Link to="/browse?category=home" className="cat-card">
-            <div className="cat-overlay-accent"></div>
-            <div className="cat-bg cat-home" style={{ height: '100%' }}>
-              <div className="cat-abstract">
-                <svg width="140" height="100" viewBox="0 0 140 100" fill="none">
-                  <polygon points="70,10 10,50 130,50" stroke="white" strokeWidth="1" />
-                  <rect x="35" y="50" width="70" height="40" stroke="white" strokeWidth="1" />
-                </svg>
-              </div>
-            </div>
-            <div className="cat-info">
-              <div>
-                <div className="cat-name">Home</div>
-                <div className="cat-count">380 pieces</div>
-              </div>
-            </div>
-            <div className="cat-arrow">→</div>
-          </Link>
-          {/* Beauty */}
-          <Link to="/browse?category=beauty" className="cat-card">
-            <div className="cat-overlay-accent"></div>
-            <div className="cat-bg cat-beauty" style={{ height: '100%' }}>
-              <div className="cat-abstract">
-                <svg width="120" height="100" viewBox="0 0 120 100" fill="none">
-                  <circle cx="60" cy="50" r="40" stroke="#3a3028" strokeWidth="1" />
-                  <circle cx="60" cy="50" r="20" stroke="#3a3028" strokeWidth="1" />
-                </svg>
-              </div>
-            </div>
-            <div className="cat-info" style={{ background: 'linear-gradient(to top, rgba(58,48,40,0.5) 0%, transparent 100%)' }}>
-              <div>
-                <div className="cat-name" style={{ color: 'var(--text)' }}>Beauty</div>
-                <div className="cat-count" style={{ color: '#888' }}>290 pieces</div>
-              </div>
-            </div>
-            <div className="cat-arrow" style={{ borderColor: 'rgba(0,0,0,0.2)', color: 'var(--text)' }}>→</div>
-          </Link>
+              <div className="cat-filter-label">{cat.label}</div>
+            </Link>
+          ))}
         </div>
       </section>
 
@@ -263,6 +230,33 @@ export default function Home() {
               ))}
         </div>
       </section>
+      {/* ── Temporary admin shortcut ───────────────────────────────────────── */}
+      <Link
+        to="/admin/products"
+        title="Admin: review product genders"
+        style={{
+          position: 'fixed',
+          bottom: 28,
+          right: 28,
+          zIndex: 999,
+          background: '#111',
+          color: '#fff',
+          border: 'none',
+          borderRadius: 10,
+          padding: '10px 16px',
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: 'pointer',
+          textDecoration: 'none',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+          letterSpacing: '0.03em',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 7,
+        }}
+      >
+        🗂️ Gender Review
+      </Link>
     </div>
   );
 }
