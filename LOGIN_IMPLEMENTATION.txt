@@ -1,0 +1,80 @@
+LOGIN & AUTHENTICATION IMPLEMENTATION NOTES
+===========================================
+Quick Fashion — Redesigned Authentication System & Backend Integration
+Date: 2026-08-04
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OVERVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+The login and registration experience has been completely redesigned to match the high-fashion editorial aesthetic of `login.html`. The page features a dual-panel layout, smooth interactive cursor ring animations, responsive tab switching between "Sign In" and "Create Account", and full integration with the Express backend authentication system.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. UI & DESIGN SYSTEM (`login.html` Fidelity)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Split-Screen Layout (`.login-shell`):
+  • Left Panel (`.shell-left`): Dark editorial panel (#0a0a0a) with custom radial lighting gradients, subtle noise texture overlay, tilted geometric accents (`.shell-figure`, `.shell-ring`), and Cormorant Garamond serif typography.
+  • Right Panel (`.shell-right`): Clean cream workspace (#f5f3ef) housing the active authentication form wrap.
+
+- Tabbed Form Navigation:
+  • "Sign In" and "Create Account" tab buttons toggle smoothly without page reloads.
+  • Bottom underline indicator dynamically slides into position when switching tabs.
+  • Subtitles and titles update to match returning clients vs. new clients.
+
+- Input & Error Styling:
+  • Inputs feature custom underline borders (`border-bottom: 1px solid #c4bfb5`) that highlight with warm gold (`#b8956a`) on focus.
+  • Error messages render in a subtle red callout box (`.error-msg.show`) animated into view when credentials fail or validation fails.
+
+- Custom Interactive Cursor:
+  • Smooth dual-layer cursor (inner dot and outer tracking ring) that follows mouse movement with physics interpolation.
+
+- Responsive Collapse:
+  • On mobile screens (<= 860px), the editorial left panel collapses and the form panel expands gracefully.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. BACKEND AUTHENTICATION INTEGRATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Sign In (`POST /api/auth/login`):
+  • Payload: `{ email: siEmail, password: siPassword }`
+  • Features:
+    1. Sends credentials to Express server (`credentials: 'include'`).
+    2. Receives short-lived JWT access token (`accessToken`).
+    3. Saves access token in `localStorage.setItem('token', accessToken)`.
+    4. Saves user display name in `localStorage.setItem('username', name)`.
+    5. Dispatches custom `authChange` event to notify Navbar and other components.
+    6. Navigates to `/profile` on success.
+    7. Displays server error message (e.g., "Invalid email or password") on failure.
+
+- Create Account (`POST /api/auth/register`):
+  • Payload: `{ name: rgName, email: rgEmail, password: rgPassword }`
+  • Features:
+    1. Client-side validation: verifies `rgPassword === rgConfirm` and `rgPassword.length >= 8`.
+    2. Registers user in PostgreSQL database via Express auth route.
+    3. Automatic login: receives access token and httpOnly refresh cookie.
+    4. Saves token and username, triggers `authChange` event, and redirects to `/profile`.
+
+- Secure Token Storage (httpOnly Refresh Cookie + Access Token):
+  • Short-lived access token stored in `localStorage` for API Authorization header.
+  • Refresh token automatically set as an `httpOnly` cookie by the backend for security against XSS.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. NAVBAR & ROUTING CONNECTIVITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- `Navbar.jsx`:
+  • Profile icon link dynamically resolves to `/profile` if logged in, or `/login` if logged out.
+  • Side drawer LOGIN / LOGOUT links sync automatically via the `authChange` window event.
+
+- `Profile.jsx`:
+  • Automatically redirects unauthenticated users (`!token`) to `/login`.
+
+- `Register.jsx`:
+  • Reuses `Login.jsx` with `initialMode="register"`, ensuring visitors accessing `/register` get the same editorial view with the Create Account tab selected by default.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FILES MODIFIED & CREATED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. `Frontend/src/pages/Login.jsx`      — Redesigned dual-tab auth component with state & fetch hooks
+2. `Frontend/src/pages/Login.css`      — High-fashion styles, typography, and responsive media queries
+3. `Frontend/src/pages/Register.jsx`   — Wrapper rendering Login with initialMode="register"
+4. `Frontend/src/Layout/Navbar.jsx`    — Updated user icon link to point to /login when logged out
+5. `Frontend/src/pages/Profile.jsx`   — Added unauthenticated redirect to /login
+6. `LOGIN_IMPLEMENTATION.txt`          — This documentation file

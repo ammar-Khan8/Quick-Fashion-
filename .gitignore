@@ -57,6 +57,8 @@ build/
 # --- Secrets (Crucial for Backend) ---
 .env
 .env.local
+.env.*
+
 
 # Ignore Razorpay setup docs and scratch folders
 **/RAZORPAY_SETUP.md

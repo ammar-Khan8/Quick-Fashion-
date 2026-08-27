@@ -7,6 +7,7 @@ import Register from "./pages/Register";
 import Browse from "./pages/Browse";
 import Cart from "./pages/Cart";
 import Product from "./pages/Product";
+import AdminProducts from "./pages/AdminProducts";
 
 import Navbar from "./Layout/Navbar";
 import Footer from "./Layout/Footer";
@@ -28,6 +29,7 @@ const App = () => {
           <Route path="/browse" element={<Browse />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/product/:id" element={<Product />} />
+          <Route path="/admin/products" element={<AdminProducts />} />
         </Routes>
       </main>
 

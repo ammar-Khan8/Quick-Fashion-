@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import pool from './db/postgres.js';
 import productsRouter from './routes/products.js';
 import authRouter from './routes/auth.js';
+import adminRouter from './routes/admin.js';
 // import paymentsRouter from './routes/payments.js';
 
 const app = express();
@@ -19,6 +20,7 @@ app.use(cookieParser());
 
 app.use('/api/products', productsRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/admin', adminRouter);
 // Payments routes: create orders, verify payments, get payment history
 // app.use('/api/payments', paymentsRouter);
 

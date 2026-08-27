@@ -9,24 +9,47 @@ export default function Browse() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sortValue, setSortValue] = useState('featured');
 
-  const search = searchParams.get('search')?.toLowerCase() || '';
-  const category = searchParams.get('category') || '';
-  const gender = searchParams.get('gender') || '';
-  const page = Math.max(1, parseInt(searchParams.get('page')) || 1);
+  const search    = searchParams.get('search')?.toLowerCase() || '';
+  const category  = searchParams.get('category') || '';
+  const gender    = searchParams.get('gender') || '';
+  const size      = searchParams.get('size') || '';
+  const minRating = parseFloat(searchParams.get('minRating')) || 0;
+  const page      = Math.max(1, parseInt(searchParams.get('page')) || 1);
+  const priceMin  = parseInt(searchParams.get('priceMin')) || 0;
+  const priceMax  = parseInt(searchParams.get('priceMax')) || 20000;
+
+  // Local slider state — only committed to URL on mouse-up
+  const [sliderMin, setSliderMin] = useState(priceMin);
+  const [sliderMax, setSliderMax] = useState(priceMax);
 
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [searchInput, setSearchInput] = useState(search);
+  const [openFilters, setOpenFilters] = useState({
+    category: true,
+    gender: true,
+    price: true,
+    size: true,
+    rating: true,
+  });
+
+  const toggleFilterGroup = (group) => {
+    setOpenFilters((prev) => ({ ...prev, [group]: !prev[group] }));
+  };
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (search) params.set('search', search);
-      if (category) params.set('category', category);
-      if (gender) params.set('gender', gender);
+      if (search)    params.set('search', search);
+      if (category)  params.set('category', category);
+      if (gender)    params.set('gender', gender);
+      if (size)      params.set('size', size);
+      if (minRating) params.set('minRating', minRating);
+      if (priceMin > 0)     params.set('minPrice', priceMin);
+      if (priceMax < 20000) params.set('maxPrice', priceMax);
       params.set('page', page);
       params.set('limit', PAGE_SIZE);
 
@@ -38,6 +61,7 @@ export default function Browse() {
         ...p,
         image: p.image_url || `https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600&auto=format&fit=crop&random=${p.id || i}`,
         price: `₹ ${Number(p.price).toLocaleString('en-IN')}`,
+        rawPrice: Number(p.price),
       }));
 
       setProducts(formatted);
@@ -48,7 +72,7 @@ export default function Browse() {
     } finally {
       setLoading(false);
     }
-  }, [search, category, gender, page]);
+  }, [search, category, gender, size, minRating, page, priceMin, priceMax]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -59,11 +83,31 @@ export default function Browse() {
     setSearchInput(search);
   }, [search]);
 
+  // Keep local sliders in sync when URL params change externally
+  useEffect(() => { setSliderMin(priceMin); }, [priceMin]);
+  useEffect(() => { setSliderMax(priceMax); }, [priceMax]);
+
+  const commitPrice = () => {
+    const next = { page: 1 };
+    if (search)   next.search = search;
+    if (category) next.category = category;
+    if (gender)   next.gender = gender;
+    if (size)     next.size = size;
+    if (minRating) next.minRating = minRating;
+    if (sliderMin > 0)     next.priceMin = sliderMin;
+    if (sliderMax < 20000) next.priceMax = sliderMax;
+    setSearchParams(next);
+  };
+
   const goToPage = (newPage) => {
     const next = { page: newPage };
-    if (search) next.search = search;
+    if (search)   next.search = search;
     if (category) next.category = category;
-    if (gender) next.gender = gender;
+    if (gender)   next.gender = gender;
+    if (size)     next.size = size;
+    if (minRating) next.minRating = minRating;
+    if (priceMin > 0)     next.priceMin = priceMin;
+    if (priceMax < 20000) next.priceMax = priceMax;
     setSearchParams(next);
   };
 
@@ -71,7 +115,11 @@ export default function Browse() {
     event.preventDefault();
     const next = { page: 1 };
     if (category) next.category = category;
-    if (gender) next.gender = gender;
+    if (gender)   next.gender = gender;
+    if (size)     next.size = size;
+    if (minRating) next.minRating = minRating;
+    if (priceMin > 0)     next.priceMin = priceMin;
+    if (priceMax < 20000) next.priceMax = priceMax;
     const trimmed = searchInput.trim();
     if (trimmed) next.search = trimmed;
     setSearchParams(next);
@@ -79,24 +127,61 @@ export default function Browse() {
 
   const toggleGender = (g) => {
     const next = { page: 1 };
-    if (search) next.search = search;
+    if (search)   next.search = search;
     if (category) next.category = category;
-    // clicking the active gender deselects it
+    if (size)     next.size = size;
+    if (minRating) next.minRating = minRating;
+    if (priceMin > 0)     next.priceMin = priceMin;
+    if (priceMax < 20000) next.priceMax = priceMax;
     if (gender !== g) next.gender = g;
+    setSearchParams(next);
+  };
+
+  const toggleSize = (sz) => {
+    const next = { page: 1 };
+    if (search)   next.search = search;
+    if (category) next.category = category;
+    if (gender)   next.gender = gender;
+    if (minRating) next.minRating = minRating;
+    if (priceMin > 0)     next.priceMin = priceMin;
+    if (priceMax < 20000) next.priceMax = priceMax;
+    if (size !== sz) next.size = sz;
+    setSearchParams(next);
+  };
+
+  const toggleRating = (r) => {
+    const next = { page: 1 };
+    if (search)   next.search = search;
+    if (category) next.category = category;
+    if (gender)   next.gender = gender;
+    if (size)     next.size = size;
+    if (priceMin > 0)     next.priceMin = priceMin;
+    if (priceMax < 20000) next.priceMax = priceMax;
+    if (minRating !== r) next.minRating = r;
     setSearchParams(next);
   };
 
   const clearTag = (tagType) => {
     const next = { page: 1 };
-    if (tagType !== 'search' && search) next.search = search;
-    if (tagType !== 'category' && category) next.category = category;
-    if (tagType !== 'gender' && gender) next.gender = gender;
+    if (tagType !== 'search'    && search)    next.search = search;
+    if (tagType !== 'category'  && category)  next.category = category;
+    if (tagType !== 'gender'    && gender)    next.gender = gender;
+    if (tagType !== 'size'      && size)      next.size = size;
+    if (tagType !== 'rating'    && minRating) next.minRating = minRating;
+    if (tagType !== 'price') {
+      if (priceMin > 0)     next.priceMin = priceMin;
+      if (priceMax < 20000) next.priceMax = priceMax;
+    }
     setSearchParams(next);
   };
 
   const clearAllFilters = () => {
+    setSliderMin(0);
+    setSliderMax(20000);
     setSearchParams({ page: 1 });
   };
+
+  const priceActive = priceMin > 0 || priceMax < 20000;
 
   const pageLabel = search
     ? `Search results for "${search}"`
@@ -130,44 +215,201 @@ export default function Browse() {
         <aside className="browse-filters">
           <div className="filter-title">Filters</div>
 
-          <div className="filter-group">
-            <div className="filter-heading">Gender</div>
+          <div className={`filter-group ${openFilters.category ? 'open' : 'collapsed'}`}>
+            <div
+              className="filter-heading"
+              onClick={() => toggleFilterGroup('category')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleFilterGroup('category');
+                }
+              }}
+            >
+              Category
+            </div>
             <div className="filter-body">
-              <div className="filter-options">
-                {['women', 'men', 'kids'].map((g) => (
-                  <div
-                    key={g}
-                    className={`filter-option${gender === g ? ' checked' : ''}`}
-                    onClick={() => toggleGender(g)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <span className="box" />
-                    {g.charAt(0).toUpperCase() + g.slice(1)}
-                  </div>
-                ))}
+              <div className="filter-body-inner">
+                <div className="filter-options">
+                  {['Kurti', 'Dress', 'Shirt', 'T-Shirt', 'Jeans', 'Trousers', 'Jacket', 'Hoodie', 'Top', 'Saree'].map((cat) => (
+                    <div
+                      key={cat}
+                      className={`filter-option${category.toLowerCase() === cat.toLowerCase() ? ' checked' : ''}`}
+                      onClick={() => {
+                        const next = { page: 1 };
+                        if (search) next.search = search;
+                        if (gender) next.gender = gender;
+                        if (priceMin > 0) next.priceMin = priceMin;
+                        if (priceMax < 20000) next.priceMax = priceMax;
+                        if (category.toLowerCase() !== cat.toLowerCase()) next.category = cat;
+                        setSearchParams(next);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <span className="box" />
+                      {cat}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="filter-group">
-            <div className="filter-heading">Color</div>
+          <div className={`filter-group ${openFilters.gender ? 'open' : 'collapsed'}`}>
+            <div
+              className="filter-heading"
+              onClick={() => toggleFilterGroup('gender')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleFilterGroup('gender');
+                }
+              }}
+            >
+              Gender
+            </div>
             <div className="filter-body">
-              <div className="swatches">
-                <span className="swatch active" style={{ background: '#0a0a0a' }} />
-                <span className="swatch" style={{ background: '#b8956a' }} />
-                <span className="swatch" style={{ background: '#c8b89a' }} />
-                <span className="swatch" style={{ background: '#ede9e1' }} />
+              <div className="filter-body-inner">
+                <div className="filter-options">
+                  {['women', 'men', 'kids'].map((g) => (
+                    <div
+                      key={g}
+                      className={`filter-option${gender === g ? ' checked' : ''}`}
+                      onClick={() => toggleGender(g)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <span className="box" />
+                      {g.charAt(0).toUpperCase() + g.slice(1)}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="filter-group">
-            <div className="filter-heading">Price</div>
+          <div className={`filter-group ${openFilters.price ? 'open' : 'collapsed'}`}>
+            <div
+              className="filter-heading"
+              onClick={() => toggleFilterGroup('price')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleFilterGroup('price');
+                }
+              }}
+            >
+              Price
+            </div>
             <div className="filter-body">
-              <div className="price-range">
-                <span>₹ 2k</span>
-                <input type="range" min="0" max="100" defaultValue="70" />
-                <span>₹ 20k</span>
+              <div className="filter-body-inner">
+                <div className="price-labels">
+                  <span>₹ {sliderMin.toLocaleString('en-IN')}</span>
+                  <span>₹ {sliderMax.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="price-dual-range">
+                  <input
+                    className="price-slider price-slider--min"
+                    type="range"
+                    min="0"
+                    max="20000"
+                    step="500"
+                    value={sliderMin}
+                    onChange={(e) => {
+                      const v = Math.min(Number(e.target.value), sliderMax - 500);
+                      setSliderMin(v);
+                    }}
+                    onMouseUp={commitPrice}
+                    onTouchEnd={commitPrice}
+                  />
+                  <input
+                    className="price-slider price-slider--max"
+                    type="range"
+                    min="0"
+                    max="20000"
+                    step="500"
+                    value={sliderMax}
+                    onChange={(e) => {
+                      const v = Math.max(Number(e.target.value), sliderMin + 500);
+                      setSliderMax(v);
+                    }}
+                    onMouseUp={commitPrice}
+                    onTouchEnd={commitPrice}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={`filter-group ${openFilters.size ? 'open' : 'collapsed'}`}>
+            <div
+              className="filter-heading"
+              onClick={() => toggleFilterGroup('size')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleFilterGroup('size');
+                }
+              }}
+            >
+              Size
+            </div>
+            <div className="filter-body">
+              <div className="filter-body-inner">
+                <div className="filter-options">
+                  {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((sz) => (
+                    <div
+                      key={sz}
+                      className={`filter-option${size.toUpperCase() === sz ? ' checked' : ''}`}
+                      onClick={() => toggleSize(sz)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <span className="box" />
+                      {sz}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={`filter-group ${openFilters.rating ? 'open' : 'collapsed'}`}>
+            <div
+              className="filter-heading"
+              onClick={() => toggleFilterGroup('rating')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleFilterGroup('rating');
+                }
+              }}
+            >
+              Customer Rating
+            </div>
+            <div className="filter-body">
+              <div className="filter-body-inner">
+                <div className="filter-options">
+                  {[4, 3, 2, 1].map((r) => (
+                    <div
+                      key={r}
+                      className={`filter-option${minRating === r ? ' checked' : ''}`}
+                      onClick={() => toggleRating(r)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <span className="box" />
+                      <span className="star-rating">{'★'.repeat(r)}{'☆'.repeat(5 - r)}</span> & Up
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -193,7 +435,7 @@ export default function Browse() {
             </label>
           </div>
 
-          {(search || category || gender) && (
+          {(search || category || gender || size || minRating || priceActive) && (
             <div className="active-tags">
               {search && (
                 <button className="active-tag" type="button" onClick={() => clearTag('search')}>
@@ -208,6 +450,21 @@ export default function Browse() {
               {gender && (
                 <button className="active-tag" type="button" onClick={() => clearTag('gender')}>
                   {gender} <span className="x">×</span>
+                </button>
+              )}
+              {size && (
+                <button className="active-tag" type="button" onClick={() => clearTag('size')}>
+                  Size: {size} <span className="x">×</span>
+                </button>
+              )}
+              {minRating > 0 && (
+                <button className="active-tag" type="button" onClick={() => clearTag('rating')}>
+                  {minRating}★ & Up <span className="x">×</span>
+                </button>
+              )}
+              {priceActive && (
+                <button className="active-tag" type="button" onClick={() => clearTag('price')}>
+                  ₹{priceMin.toLocaleString('en-IN')} – ₹{priceMax.toLocaleString('en-IN')} <span className="x">×</span>
                 </button>
               )}
             </div>

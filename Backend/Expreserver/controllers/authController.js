@@ -196,6 +196,11 @@ export async function getProfile(req, res) {
   try {
     const userId = req.user?.id; //the ? is optional chaining, it checks if req.user exists
     // before trying to access .id.
+    // user is not something that exists in the request by default. It is typically added 
+    // by authentication middleware that runs before this controller function. 
+    // For example, if you have middleware that verifies a JWT access token, it might decode 
+    // the token and attach the user information (like user ID) to req.user. This way, when 
+    // getProfile is called, it can access req.user.id to know which user's profile to retrieve.
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized.' });
     }

@@ -47,6 +47,7 @@ const Profile = () => {
     const token = localStorage.getItem('token');
     if (!token) {
       setLoading(false);
+      navigate('/login');
       return;
     }
 

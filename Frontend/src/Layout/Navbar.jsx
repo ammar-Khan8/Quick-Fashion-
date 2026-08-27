@@ -81,7 +81,7 @@ export default function Navbar() {
             />
           </div>
           <Link to="#" className="icon-link"><Search strokeWidth={1} size={24} className="mobile-search-icon" /></Link>
-          <Link to="/profile" className="icon-link"><User strokeWidth={1} size={24} /></Link>
+          <Link to={isAuthenticated ? "/profile" : "/login"} className="icon-link"><User strokeWidth={1} size={24} /></Link>
           <Link to="/cart" className="icon-link"><ShoppingBag strokeWidth={1} size={24} /></Link>
           {/* //search,user,shopping etc are from lucide */}
         </div>
