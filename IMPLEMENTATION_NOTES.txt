@@ -1,0 +1,200 @@
+IMPLEMENTATION NOTES
+====================
+Quick Fashion — Unisex Migration & Category Filter Fix
+Date: 2026-08-04
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 1 — Move Unisex Products to a New "others" Table
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT WAS DONE
+─────────────
+All products with gender = 'unisex' in the Supabase 'products' table were
+identified (186 rows), copied into a brand-new 'others' table, and then
+deleted from 'products' so they no longer appear on the website.
+
+HOW IT WAS DONE
+───────────────
+A one-shot migration script was created at:
+
+  Backend/Expreserver/scripts/migrate_unisex_to_others.js
+
+The script runs the following steps in order:
+
+  1. DISCOVERY — queries all distinct categories and gender breakdown
+     so you can see exactly what's in the DB before touching anything.
+
+  2. CREATE TABLE — runs:
+
+       CREATE TABLE IF NOT EXISTS others (
+         id            INTEGER PRIMARY KEY,
+         name          TEXT,
+         brand         TEXT,
+         category      TEXT,
+         description   TEXT,
+         price         NUMERIC,
+         trend_score   INTEGER,
+         product_code  TEXT,
+         external_id   TEXT,
+         image_url     TEXT,
+         gender        TEXT
+       )
+
+     The schema mirrors the columns pulled from 'products' so the
+     data is preserved and easy to re-migrate later when you're ready
+     to categorise these items.
+
+  3. COPY — copies all unisex rows into 'others' using:
+
+       INSERT INTO others (...)
+       SELECT ... FROM products WHERE gender = 'unisex'
+       ON CONFLICT (id) DO NOTHING
+
+     The ON CONFLICT clause makes the script idempotent — safe to run
+     again without duplicating rows.
+
+  4. DELETE — removes the unisex rows from 'products':
+
+       DELETE FROM products WHERE gender = 'unisex'
+
+RESULTS
+───────
+  Before migration:
+    women  : 554
+    men    : 223
+    unisex : 186   ← moved out
+    kids   :  37
+
+  After migration:
+    products table → women (554), men (223), kids (37)
+    others   table → 186 unisex products (hidden from website)
+
+WHY THIS APPROACH
+─────────────────
+Rather than adding a visibility flag or status column to 'products',
+a separate table was used because:
+  - It keeps the live catalog clean without any extra WHERE clauses.
+  - You can browse and categorise items in 'others' at your own pace
+    using a simple admin query in the Supabase dashboard.
+  - When you're ready to bring a product back, just INSERT it back into
+    'products' with the correct gender and DELETE it from 'others'.
+
+HOW TO BRING PRODUCTS BACK LATER
+─────────────────────────────────
+  1. Open Supabase Table Editor → others
+  2. Decide the correct gender for a product (women / men / kids)
+  3. Run:
+
+       -- Example: move a single product back
+       INSERT INTO products (id, name, brand, category, description, price,
+                             trend_score, product_code, external_id, image_url, gender)
+       SELECT id, name, brand, category, description, price,
+              trend_score, product_code, external_id, image_url, 'women'
+       FROM others
+       WHERE id = <product_id>;
+
+       DELETE FROM others WHERE id = <product_id>;
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 2 — Fix Category Filters for Women and Men
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+THE PROBLEM
+───────────
+The Home page had a single hardcoded PRODUCT_CATEGORIES array that was
+shared for both genders. It contained categories that don't exist in the
+DB (e.g. 'ethnic-sets') and used lowercase slugs that didn't match the
+Title-Case category names actually stored in Supabase (e.g. 'dresses'
+vs 'Dress'). This meant clicking those filter cards returned 0 results.
+
+WHAT THE DB ACTUALLY CONTAINS
+──────────────────────────────
+After running the migration and inspecting the live data, these are the
+real categories in each gender group:
+
+  Women (554 products):
+    Kurti, Dress, Skirt, Top, Tracksuit, Blouse, Leggings, Jumpsuit, Saree
+
+  Men (223 products):
+    Shirt, T-shirt, Jeans, Trousers, Hoodie, Jacket, Coat, Sweater, Shorts
+
+  Kids (37 products):
+    (mixed categories — no dedicated filter grid for kids on Home)
+
+HOW IT WAS FIXED
+────────────────
+File: Frontend/src/pages/Home.jsx
+
+  The single PRODUCT_CATEGORIES array was replaced with a
+  CATEGORIES_BY_GENDER object that holds two separate arrays:
+
+    const CATEGORIES_BY_GENDER = {
+      women: [ Kurti, Dress, Skirt, Top, Tracksuit, Blouse, Leggings, Jumpsuit, Saree ],
+      men:   [ Shirt, T-shirt, Jeans, Trousers, Hoodie, Jacket, Coat, Sweater, Shorts ],
+    };
+
+  The category grid now renders whichever sub-array matches the active
+  gender toggle:
+
+    {(CATEGORIES_BY_GENDER[activeGender] || []).map((cat) => ...)}
+
+  Each card links to:
+    /browse?gender=<activeGender>&category=<cat.id>
+
+  The category IDs now use exact Title-Case values (e.g. 'Dress', 'T-shirt')
+  that match the Supabase column, so the backend ILIKE query finds them.
+
+BACKEND FIX (products.js)
+──────────────────────────
+The gender filter in Backend/Expreserver/routes/products.js previously
+added an OR clause to also return unisex products when filtering by gender:
+
+    (p.gender = $1 OR p.gender = 'unisex')
+
+Since there are no longer any unisex products in 'products', this was
+simplified to a clean exact match:
+
+    p.gender = $1
+
+BROWSE PAGE FIX (Browse.jsx)
+─────────────────────────────
+The sidebar gender filter in Frontend/src/pages/Browse.jsx previously
+showed four options: Women, Men, Kids, Unisex.
+'Unisex' has been removed since those products no longer exist in the
+main catalog.
+
+ADMIN PAGE FIX (AdminProducts.jsx)
+────────────────────────────────────
+The filter pills in the Gender Review admin page previously included
+'unisex'. That pill has been removed so the view matches the current
+state of the database.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FILES CHANGED SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  NEW
+  ───
+  Backend/Expreserver/scripts/migrate_unisex_to_others.js
+    → One-shot script that creates the 'others' table and migrates
+      all 186 unisex products out of 'products'. Already been run.
+
+  MODIFIED
+  ────────
+  Frontend/src/pages/Home.jsx
+    → Replaced PRODUCT_CATEGORIES (single shared list with wrong slugs)
+      with CATEGORIES_BY_GENDER (two separate accurate lists per gender).
+    → Category grid now renders the correct sub-list based on activeGender.
+
+  Frontend/src/pages/Browse.jsx
+    → Removed 'unisex' from the sidebar gender filter options.
+
+  Backend/Expreserver/routes/products.js
+    → Simplified gender WHERE clause: removed the old OR unisex fallback.
+
+  Frontend/src/pages/AdminProducts.jsx
+    → Removed 'unisex' pill from the gender filter in the admin review page.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+END OF IMPLEMENTATION NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Core Theme Palette */
+  --color-bg-main: #f5f3ef;          /* Soft Ivory */
+  --color-bg-secondary: #ede9e1;     /* Warm Cream */
+  --color-accent: #b8956a;           /* Warm Gold */
+  --color-text: #1a1917;             /* Near Black */
+  --color-highlight: #6E1F28;        /* Deep Wine Red */
+
+  /* Compatibility Mapping */
+  --color-black: var(--color-text);
+  --color-white: var(--color-bg-main);
+  --color-gray: rgba(26, 25, 23, 0.12);
+  --color-light-gray: var(--color-bg-secondary);
+  
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--color-bg-main);
+  color: var(--color-text);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul {
+  list-style: none;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+}
+
+/* Utilities */
+.text-uppercase { text-transform: uppercase; }
+.font-light { font-weight: 300; }
+.font-medium { font-weight: 500; }
+.font-bold { font-weight: 700; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-light-gray);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-text);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-black);
+}
