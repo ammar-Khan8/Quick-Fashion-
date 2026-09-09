@@ -1,0 +1,12 @@
+we dont need csrf tokens cz im not using cookies here.
+
+auth.js has all route handlers related to authentication
+authcontroller is a controller (uski definition dekh lena its a backend term). so it contains all the
+functions related to authentication
+
+ek baar login kaam ni kiya tha since maine secrets hi ni daale the for jwt ke liye lol
+
+access tokens should not be stored in db refresh is stored but seperately
+why revoke and not dlt refresh on logout???
+ai was sending access AND refresh to frontend. and front end was extrcing data.token and not data.accessToken
+lol stupid ai
