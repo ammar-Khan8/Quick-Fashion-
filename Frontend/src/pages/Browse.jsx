@@ -24,13 +24,15 @@ export default function Browse() {
       const params = new URLSearchParams();
       if (search)   params.set('search',   search);
       if (category) params.set('category', category);
-      params.set('page',  page);
-      params.set('limit', PAGE_SIZE);
+     params.set('page', page);
+params.set('limit', PAGE_SIZE);
 
-      const response = await fetch(`http://localhost:3000/api/products?${params}`);
-      if (!response.ok) throw new Error('Network response was not ok');
-      const data = await response.json();
+const response = await fetch(
+  `${import.meta.env.VITE_API_URL}/api/products?${params}`
+);
 
+if (!response.ok) throw new Error('Network response was not ok');
+const data = await response.json();
       const formatted = data.products.map((p, i) => ({
         ...p,
         image: p.image_url || `https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600&auto=format&fit=crop&random=${p.id || i}`,
