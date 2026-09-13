@@ -97,7 +97,7 @@ export default function Home() {
     params.set('limit', slide.fetchParams.limit);
     params.set('page', 1);
 
-    fetch(`http://localhost:3000/api/products?${params}`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/products?${params}`)
       .then((r) => r.json())
       .then((data) => {
         const items = (data.products || []).map((p) => ({
@@ -113,7 +113,7 @@ export default function Home() {
 
   // ─── Fetch new arrivals (unchanged) ───────────────────────────────────────
   useEffect(() => {
-    fetch('http://localhost:3000/api/products?limit=4&page=1')
+    fetch(`${import.meta.env.VITE_API_URL}/api/products?limit=4&page=1`)
       .then((r) => r.json())
       .then((data) => {
         const items = (data.products || []).map((p) => ({
